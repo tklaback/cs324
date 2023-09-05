@@ -64,28 +64,67 @@ void part1() {
 	printf("===== Question 1 =====\n");
 	char s1[] = "hello";
 	int s1_len;
+	s1_len = sizeof(s1);
+	printf("SIZE OF S1: %d\n", s1_len);
+	// The number of bytes allocated for s1 is one larger than
+	// the number of visible characters due to the null operator
+	// that is added to the end.
 
 	printf("===== Question 2 =====\n");
 
+	memprint(s1, "0x%02x", s1_len);
+	memprint(s1, "%d", s1_len);
+	memprint(s1, "%c", s1_len);
+	// Integer value of the extra byte is 0.
+
 	printf("===== Question 3 (no code changes) =====\n");
 
+	// #
+
 	printf("===== Question 4 (no code changes) =====\n");
+
+	// 7a
 
 	printf("===== Question 5 =====\n");
 	char s2[10];
 	int s2_len;
+	s2_len = sizeof(s2);
+
+	printf("SIZE OF S2: %d\n", s2_len);
+
+	// The number of bytes allocated is the same as the number of
+	// bytes allocated for s2 because s2 is defined using a char array,
+	// not a string.
 
 	printf("===== Question 6 =====\n");
 	char *s3 = s1;
 	int s3_len;
+	s3_len = sizeof(s3);
+	printf("SIZE OF S3: %d\n", s3_len);
+
+	// s3 is a variable that holds an address, not an array of bytes. Therefore, when we print
+	// its size, we don't see how large the array of bytes is that it points to,
+	// but the size (amount of bytes) of the value (in this case a 64 bit integer)
+	// that it contains.
 
 	printf("===== Question 7 =====\n");
 	char *s4 = malloc(1024 * sizeof(char));
 	int s4_len;
 
+	s4_len = sizeof(s4);
+	free(s4);
+
+	printf("SIZE OF S4: %d\n", s4_len);
+
+	// same as above
+
 	printf("===== Question 8 (no code changes) =====\n");
 
+	// 1,024 bytes allocated and not freed
+
 	printf("===== Question 9 =====\n");
+
+	// 0 in use at exit
 
 }
 
