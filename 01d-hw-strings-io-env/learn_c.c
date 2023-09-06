@@ -23,12 +23,12 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	intro();
-	part1();
+	// part1();
 	part2();
-	part3();
-	part4();
-	part5(argv[1]);
-	part6();
+	// part3();
+	// part4();
+	// part5(argv[1]);
+	// part6();
 }
 
 void memprint(char *s, char *fmt, int len) {
@@ -138,22 +138,82 @@ void part2() {
 
 	printf("===== Question 10 =====\n");
 
+	printf("ADDRESS OF S1: %lu\n", (long unsigned int)&s1);
+	printf("ADRRESS OF S2: %lu\n", (long unsigned int)&s2);
+	printf("ADRRESS OF S3: %lu\n", (long unsigned int)&s3);
+
+	// None of them since they are each different variables
+
 	printf("===== Question 11 =====\n");
+
+	printf("VALUE IN S1: %lu\n", (long unsigned int)s1);
+	printf("VALUE IN S2: %lu\n", (long unsigned int)s2);
+	printf("VALUE IN S3: %lu\n", (long unsigned int)s3);
 
 	printf("===== Question 12 (no code changes) =====\n");
 
+	// For char[] the address of the variable is also the address referred to by the variable.
+	// This means there is no changing the referred-to address of a variable declared char[]
+
+	// variable s3 refers to the same content as s1. This is because s3 was declared a pointer that
+	// holds the same address as the address stored in s1.
+
 	printf("===== Question 13 =====\n");
+
+	printf("CONTENT OF S1: %s\n", s1);
+	printf("CONTENT OF S2: %s\n", s2);
+	printf("CONTENT OF S3: %s\n", s3);
+
+	// They each have the same content. s1 contains the address at which the string "hello" resides.
+	// The contents of s1's pointer value are then copied to the address stored in s2. s1's pointer value is
+	// then placed as s3's pointer value. Therefore they all contain the same contents.
+
 
 	printf("===== Question 14 =====\n");
 
+	printf("%s\n", &s1[0] == &s2[0] ? "S1 == S2" : "S1 != S2");
+	printf("%s\n", &s1[0] == &s3[0] ? "S1 == S3" : "S1 != S3");
+	printf("%s\n", &s2[0] == &s3[0] ? "S2 == S3" : "S2 != S3");
+
+	// s1 and s3 reffer to the same memory locations since the value stored in s1 was 
+	// later placed in s3.
+
 	printf("===== Question 15 =====\n");
+
+	printf("%s\n", strcmp(s1, s2) == 0 ? "S1 == S2" : "S1 != S2");
+	printf("%s\n", strcmp(s1, s3) == 0 ? "S1 == S3" : "S1 != S3");
+	printf("%s\n", strcmp(s2, s3) == 0 ? "S2 == S3" : "S2 != S3");
+
+	// they all equal each other
 
 	printf("===== Question 16 =====\n");
 	s1[1] = 'u';
 
+	printf("CONTENT OF S1: %s\n", s1);
+	printf("CONTENT OF S2: %s\n", s2);
+	printf("CONTENT OF S3: %s\n", s3);
+
+	// Both s1 and s3 are different. This is because s1 and s3 contain the same pointer values
+	// and can alter the same things in memory.
+
 	printf("===== Question 17 =====\n");
 
+	printf("%s\n", &s1[0] == &s2[0] ? "S1 == S2" : "S1 != S2");
+	printf("%s\n", &s1[0] == &s3[0] ? "S1 == S3" : "S1 != S3");
+	printf("%s\n", &s2[0] == &s3[0] ? "S2 == S3" : "S2 != S3");
+
+	// No, none of the pointer values have changed since question 14 since none of the pointers have
+	// changed the addresses they refer to.
+	
 	printf("===== Question 18 =====\n");
+
+	printf("%s\n", strcmp(s1, s2) == 0 ? "S1 == S2" : "S1 != S2");
+	printf("%s\n", strcmp(s1, s3) == 0 ? "S1 == S3" : "S1 != S3");
+	printf("%s\n", strcmp(s2, s3) == 0 ? "S2 == S3" : "S2 != S3");
+
+
+	// Yes, because now only s1 and s3 have the same values because when s1's array was altered, so 
+	// was s3's since the reference the same address.
 }
 
 void part3() {
