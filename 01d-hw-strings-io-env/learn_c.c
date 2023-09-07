@@ -24,9 +24,9 @@ int main(int argc, char *argv[]) {
 	}
 	intro();
 	// part1();
-	part2();
+	// part2();
 	// part3();
-	// part4();
+	part4();
 	// part5(argv[1]);
 	// part6();
 }
@@ -221,7 +221,17 @@ void part3() {
 	char s2[] = { 97, 98, 99, 100, 101, 102 };
 	char s3[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66 };
 
+	size_t s1_size = sizeof(s1);
+
+	printf("%s\n", memcmp(s1, s2, s1_size) == 0 ? "s1 == s2" : "s1 != s2");
+	printf("%s\n", memcmp(s2, s3, s1_size) == 0 ? "s2 == s3" : "s2 != s3");
+	printf("%s\n", memcmp(s1, s3, s1_size) == 0 ? "s1 == s3" : "s1 != s3");
+
 	printf("===== Question 19 =====\n");
+
+	// They are all the same. Each char array contains values that can be represented as characters.
+	// when we print each char array as a string, we get the same result since each char array is the
+	// same, just represented by different characters.
 }
 
 void part4() {
@@ -229,22 +239,56 @@ void part4() {
 	char s2[] = { 'a', 'b', 'c', '\0', 'x', 'y', 'z', '\0' };
 
 	printf("===== Question 20 =====\n");
+	size_t s1_size = sizeof(s1);
+	printf("%s\n", memcmp(s1, s2, s1_size) == 0 ? "s1 == s2" : "s1 != s2");
+
+	// They are not equal since they have some different values.
 
 	printf("===== Question 21 =====\n");
+	printf("%s\n", strcmp(s1, s2) == 0 ? "s1 == s2" : "s1 != s2");
+
+	// They are evaluated using strcmp as thesame since by definition a string is a null-terminated
+	// char array. This means that the strings will only be compared to the first null character.
+	// In this case, they are both the same up to the first null character.
 
 	printf("===== Question 22 =====\n");
 	char s3[16];
 	char s4[16];
 
+	memset(s3, 'z', sizeof(s3));
+	memprint(s3, "%02x", sizeof(s3));
+
+	memset(s4, 'z', sizeof(s4));
+	memprint(s4, "%02x", sizeof(s4));
+
+	// no
+
 	printf("===== Question 23 =====\n");
+
+	strcpy(s3, s1);
+	memprint(s3, "%02x", sizeof(s3));
+
+	// Only the first 4 bytes (which includes the null character) since strcpy only recognizes the values
+	// in s1 up to and including the first null character.
 
 	printf("===== Question 24 =====\n");
 	int myval = 42;
+
+	sprintf(s4, "%s %d\n", s1, myval);
+	memprint(s4, "%02x", sizeof(s4));
+
+	// the null value was placed at the very end of the formated string after it was processed.
 
 	printf("===== Question 25 =====\n");
 	char *s5;
 	char *s6 = NULL;
 	char *s7 = s4;
+
+	memprint(s5, "%02x", 8);
+	// memprint(s6, "%02x", 8);
+	memprint(s7, "%02x", 8);
+	
+	// They can all be printed except for s6
 
 }
 
