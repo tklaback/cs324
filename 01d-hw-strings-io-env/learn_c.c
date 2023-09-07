@@ -23,12 +23,12 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	intro();
-	// part1();
-	// part2();
-	// part3();
+	part1();
+	part2();
+	part3();
 	part4();
-	// part5(argv[1]);
-	// part6();
+	part5(argv[1]);
+	part6();
 }
 
 void memprint(char *s, char *fmt, int len) {
@@ -295,55 +295,199 @@ void part4() {
 void part5(char *filename) {
 	printf("===== Question 26 =====\n");
 
+	printf("stdin: %d\n", fileno(stdin));
+	printf("stdout: %d\n", fileno(stdout));
+	printf("stderr: %d\n", fileno(stderr));
+
+	// stdin = 0 stdout = 1 stderr = 2
+
 	printf("===== Question 27 =====\n");
 
 	char buf[BUFSIZE];
 
+	memset(buf, 'z', BUFSIZE);
+	memset(buf + 24, 0, 1);
+	memprint(buf, "%02x", BUFSIZE);
+
+	// No
+
 	printf("===== Question 28 =====\n");
+
+	printf("%s\n", buf);
+	write(fileno(stdout), buf, BUFSIZE);
+	printf("\n");
+
+	// printtf prints up to but nott including the null byte. write prints all values except for null value.
 
 	fprintf(stderr, "===== Question 29 =====\n");
 
+	fprintf(stderr, "%s\n", buf);
+	write(fileno(stderr), buf, BUFSIZE);
+	fprintf(stderr, "\n");
+
+	// You only see what is printed to stderr, not what is printed to stdout.
+
 	printf("===== Question 30 (no code changes) =====\n");
+
+	// 2> prints everything but the stderr
 
 	printf("===== Question 31 =====\n");
 	int fd1, fd2;
+	char cwd[1024];
+	getcwd(cwd, sizeof(cwd));
+	char path[strlen(cwd) + sizeof(filename) + 1];
+
+	sprintf(path, "%s/%s", getenv("PWD"), filename);
+
+	fd1 = open(path, O_RDONLY);
+
+	fd2 = fd1;	
+
+	printf("fd1: %d\n", fd1);
+	
+	// fd1 is the next number after stdin, stdout and stderr file descriptors
 
 	printf("===== Question 32 =====\n");
 	size_t nread = 0;
 	size_t totread = 0;
+	nread = read(fd1, buf, 4);
+	totread += nread;
+	printf("nread: %lu\n", nread);
+	printf("totread: %lu\n", totread);
 
+	memprint(buf, "%02x", BUFSIZE);
+
+	// Yes, they matched because read() returns the number of bytes read and I 
+	// passed in 4 as the amount of bytes that I wanted to be read.
+	
 	printf("===== Question 33 (no code changes) =====\n");
+
+	// No, no null characher was inluded because there is no null terminating character
+	// in the file according to hexdump
 
 	printf("===== Question 34 (no code changes) =====\n");
 
+	nread = read(fd2, &buf[totread], 4);
+	totread += nread;
+
+	printf("nread: %lu\n", nread);
+	printf("totread: %lu\n", totread);
+
+	memprint(buf, "%02x", BUFSIZE);
+
+	// No, the file was read from where it left off after the first call. This is because
+	// the file position is advanced by the number of bytes that are read from the file each time.
+
 	printf("===== Question 35 =====\n");
+
+	// Only the value of the file descriptor matters since it is the value that represents the 
+	// open file.
 
 	printf("===== Question 36 (no code changes) =====\n");
 
+	// 8
+
 	printf("===== Question 37 (no code changes) =====\n");
+
+	nread = read(fd1, &buf[totread], BUFSIZE - totread);
+	totread += nread;
+
+	printf("nread: %lu\n", nread);
+	printf("totread: %lu\n", totread);
+
+	memprint(buf, "%02x", BUFSIZE);
+
+	// The return value from read does not match the count value passed in because
+	// there were fewer bytes in the file than the number passed in.
 
 	printf("===== Question 38 =====\n");
 
+	// 22
+
 	printf("===== Question 39 (no code changes) =====\n");
+
+	// 22
 
 	printf("===== Question 40 (no code changes) =====\n");
 
+	// The number of bytes read would have been the same as BUFSIZE
+
 	printf("===== Question 41 (no code changes) =====\n");
+
+	nread = read(fd1, &buf[totread], BUFSIZE - totread);
+	totread += nread;
+
+	printf("nread: %lu\n", nread);
+	printf("totread: %lu\n", totread);
+
+	memprint(buf, "%02x", BUFSIZE);
+
+	// nread is 0 because read returns 0 when it is at end of file
 
 	printf("===== Question 42 =====\n");
 
+	printf("%s\n", buf);
+
+	// There are to z's at the end because %s only terminates after it
+	// sees a null value and the null valule came after after the two 
+	// z's in buf.
+
 	printf("===== Question 43 =====\n");
 
+	memset(&buf[totread], 0, 1);
+
+	printf("%s\n", buf);
+
+	// The output now looks the exact same as the file because
+	// by adding the null at the end of the file contents, we have
+	// told the machine to stop reading beyond the null value. 
+
 	printf("===== Question 44 =====\n");
+	int ret = 0;
+
+	ret = close(fd1);
+
+	printf("%d\n", ret);
+
+	// close returned 0 meaning successfully closed file.
 
 	printf("===== Question 45 =====\n");
-	int ret = 0;
+
+	ret = close(fd2);
+
+	printf("%d\n", ret);
+	
+	// close returned -1 meaning unsuccessfully closed file. This happened
+	// because the file is already closed and can't be closed again.
 
 	printf("===== Question 46 =====\n");
 
+	fprintf(stdout, "abc");
+	fprintf(stderr, "def");
+	fprintf(stdout, "ghi\n");
+
+	write(fileno(stdout), "abc", 3);
+	write(fileno(stderr), "def", 3);
+	write(fileno(stdout), "ghi\n", 4);
+
+	// Because stderr is unbuffered it is written first before abc. However,
+	// the write function does not buffer and therefore sends everything
+	// in the order displayed in the program.
+
 	printf("===== Question 47 =====\n");
 
-	printf("===== Question 48 =====\n");
+	fprintf(stdout, "abc");
+	fflush(stdout);
+	fprintf(stderr, "def");
+	fprintf(stdout, "ghi\n");
+
+	write(fileno(stdout), "abc", 3);
+	write(fileno(stderr), "def", 3);
+	write(fileno(stdout), "ghi\n", 4);
+
+	// the output is now the exact same because we flushed stdout's buffer
+	// before our print to stderr.
+
 
 }
 
@@ -351,5 +495,19 @@ void part6() {
 	printf("===== Question 49 =====\n");
 	char *s1;
 
+	s1 = getenv("CS324_VAR");
+
+	if (s1 == NULL) {
+		printf("CS323_VAR not found\n");
+	} else {
+		printf("CS324_VAR is %s\n", s1);
+	}
+
+	// in the first command we don't have an environment variable set, but
+	// we do in the second line.
+
 	printf("===== Question 50 (no code changes) =====\n");
+
+	// the environment variable persists and doesn't have to be on the same
+	// line as when you run the executable.
 }
