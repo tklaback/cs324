@@ -8,6 +8,11 @@ int main(int argc, char *argv[]) {
 
 	printf("Starting program; process has pid %d\n", getpid());
 
+	FILE *f = fopen("fork-output.txt", "w");
+
+	fprintf(f, "BEFORE FORK (%d)\n", fileno(f));
+	fflush(f);
+
 	if ((pid = fork()) < 0) {
 		fprintf(stderr, "Could not fork()");
 		exit(1);
@@ -21,23 +26,27 @@ int main(int argc, char *argv[]) {
 	/* END SECTION A */
 	if (pid == 0) {
 		/* BEGIN SECTION B */
-
-		printf("Section B\n");
-		sleep(30);
-		sleep(30);
-		printf("Section B done sleeping\n");
+		sleep(5);
+		fprintf(f, "SECTION B (%d)\n", fileno(f));
+		// printf("Section B\n");
+		// sleep(30);
+		// sleep(30);
+		// printf("Section B done sleeping\n");
 
 		exit(0);
 
 		/* END SECTION B */
 	} else {
 		/* BEGIN SECTION C */
+		fprintf(f, "SECTION C (%d)\n", fileno(f));
+		fclose(f);
 
-		printf("Section C\n");
+		sleep(5);
+		// printf("Section C\n");
 		// int status;
 		// wait(&status);
-		sleep(30);
-		printf("Section C done sleeping\n");
+		// sleep(30);
+		// printf("Section C done sleeping\n");
 
 		exit(0);
 

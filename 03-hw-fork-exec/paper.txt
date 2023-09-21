@@ -71,3 +71,21 @@ process since its child process terminated and was reaped.
 parent and child processes are running. Because the parent process exits before
 the child process, the second output shows that the parent process is no longer
 running and that the child's new parent process is the init process.
+
+12.
+BEFORE FORK (3)
+SECTION C (3)
+SECTION B (3)
+
+13. All of the processes wrote to the file.
+
+question: If the parent process already called fclose on the file, how is the child still able to write to
+it?
+
+14. Based on the output to stdout and to fork-output.txt, the child inherited all of the open file descriptors
+from the parent. The child can modify the same files as the parent.
+
+15. Based on the output in fork-output.txt, the second write picked up where the first write left off. This
+happened because both processes contain the same open file descriptor.
+
+16. 
