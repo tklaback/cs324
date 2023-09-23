@@ -37,9 +37,9 @@ int main(int argc, char *argv[]) {
 		printf("Section B\n");
 		close(pipefd[0]);
 		char write_string[] = "hello from Section B\n";
-		printf("SIZE OF STR: %lu\n", sizeof(write_string));
+		sleep(10);
 		write(pipefd[1], write_string, sizeof(write_string));
-
+		sleep(10);
 		close(pipefd[1]);
 
 		printf("Section B finished\n");
@@ -50,13 +50,20 @@ int main(int argc, char *argv[]) {
 	} else {
 		/* BEGIN SECTION C */
 
-		sleep(5);
 		printf("Section C\n");
 		int BUF_SIZE = 1024;
 		close(pipefd[1]);
 		char buf[BUF_SIZE];
 		int bytes_read = 0;
 		int total = 0;
+		while ((bytes_read = read(pipefd[0], buf, BUF_SIZE)) > 0){
+			total += bytes_read;
+		}
+		printf("NUMBER OF BYTES READ FROM READ: %d\n", total);
+		printf("RETURNED STRING: %s", buf);
+
+		bytes_read = 0;
+		total = 0;
 		while ((bytes_read = read(pipefd[0], buf, BUF_SIZE)) > 0){
 			total += bytes_read;
 		}

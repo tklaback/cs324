@@ -120,4 +120,17 @@ then the child would not have the ability to read or write to the pipe.
 No, one end is designated as the read end and the other as the write end.
 The man page descirbes this as unidirectional.
 
-21.
+21. 0 bytes
+
+22. 
+If a process attempts to read from an empty pipe, then read(2) will block until data is available.
+
+23.
+Read returned because the first time because it read 0 bytes from the write end.
+
+24.
+This time it returned because the write end closed the write side of the pipe and read saw an eof.
+
+25.
+0 is returned by read().
+
