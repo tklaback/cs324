@@ -13,6 +13,13 @@ int main(int argc, char *argv[]) {
 	fprintf(f, "BEFORE FORK (%d)\n", fileno(f));
 	fflush(f);
 
+	int pipefd[2];
+
+	if (pipe(pipefd) == -1){
+		perror("pipe");
+		exit(EXIT_FAILURE);
+	}
+
 	if ((pid = fork()) < 0) {
 		fprintf(stderr, "Could not fork()");
 		exit(1);
@@ -26,27 +33,38 @@ int main(int argc, char *argv[]) {
 	/* END SECTION A */
 	if (pid == 0) {
 		/* BEGIN SECTION B */
-		sleep(5);
-		fprintf(f, "SECTION B (%d)\n", fileno(f));
-		// printf("Section B\n");
-		// sleep(30);
-		// sleep(30);
-		// printf("Section B done sleeping\n");
+
+		printf("Section B\n");
+		close(pipefd[0]);
+		char write_string[] = "hello from Section B\n";
+		printf("SIZE OF STR: %lu\n", sizeof(write_string));
+		write(pipefd[1], write_string, sizeof(write_string));
+
+		close(pipefd[1]);
+
+		printf("Section B finished\n");
 
 		exit(0);
 
 		/* END SECTION B */
 	} else {
 		/* BEGIN SECTION C */
-		fprintf(f, "SECTION C (%d)\n", fileno(f));
-		fclose(f);
 
 		sleep(5);
-		// printf("Section C\n");
-		// int status;
-		// wait(&status);
-		// sleep(30);
-		// printf("Section C done sleeping\n");
+		printf("Section C\n");
+		int BUF_SIZE = 1024;
+		close(pipefd[1]);
+		char buf[BUF_SIZE];
+		int bytes_read = 0;
+		int total = 0;
+		while ((bytes_read = read(pipefd[0], buf, BUF_SIZE)) > 0){
+			total += bytes_read;
+		}
+		printf("NUMBER OF BYTES READ FROM READ: %d\n", total);
+		printf("RETURNED STRING: %s", buf);
+
+		printf("Section C finished\n");
+		close(pipefd[0]);
 
 		exit(0);
 

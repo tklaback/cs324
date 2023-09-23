@@ -88,4 +88,36 @@ from the parent. The child can modify the same files as the parent.
 15. Based on the output in fork-output.txt, the second write picked up where the first write left off. This
 happened because both processes contain the same open file descriptor.
 
-16. 
+16. Write 3 picked up where the second left off because it was still operating
+under the opened file; the file had not yet been closed, therefore its counter (
+where it is in the file) is not set back to 0.
+ 
+17. The thrid write does succeed because in the man page of close(2) we read: 
+Any  record  locks  (see  fc‐ntl(2))  held on the file it was associated with, and owned by
+the process, are removed (regardless of  the  file  descriptor that was used to obtain the lock).
+this means that fclose only applies to the process that it is called in. It detaches the
+the current process's file descriptor from the description, but the child processes'
+file descriptors still point at all of the files it inherited.
+
+18. 
+Starting program; process has pid 3679074
+Section A;  pid 3679074
+Section A;  pid 3679081
+Section B
+SIZE OF STR: 22
+Section B finished
+Section C
+NUMBER OF BYTES READ FROM READ: 22
+RETURNED STRING: hello from Section B
+Section C finished
+
+19. 
+Yes, the order does matter because as we see on the man page: The  child inherits 
+copies of the parent's set of open file descriptors. If pipe was not called before,
+then the child would not have the ability to read or write to the pipe.
+
+20.
+No, one end is designated as the read end and the other as the write end.
+The man page descirbes this as unidirectional.
+
+21.
