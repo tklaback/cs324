@@ -34,45 +34,24 @@ int main(int argc, char *argv[]) {
 	if (pid == 0) {
 		/* BEGIN SECTION B */
 
-		printf("Section B\n");
-		close(pipefd[0]);
-		char write_string[] = "hello from Section B\n";
-		sleep(10);
-		write(pipefd[1], write_string, sizeof(write_string));
-		sleep(10);
-		close(pipefd[1]);
+		char *newenviron[] = { NULL };
 
-		printf("Section B finished\n");
+		printf("Program \"%s\" has pid %d. Sleeping.\n", argv[0], getpid());
 
+		if (argc <= 1) {
+			printf("No program to exec.  Exiting...\n");
+			exit(0);
+		}
+
+		printf("Running exec of \"%s\"\n", argv[1]);
+		execve(argv[1], &argv[1], newenviron);
+		printf("End of program \"%s\".\n", argv[0]);
 		exit(0);
 
 		/* END SECTION B */
 	} else {
 		/* BEGIN SECTION C */
-
-		printf("Section C\n");
-		int BUF_SIZE = 1024;
-		close(pipefd[1]);
-		char buf[BUF_SIZE];
-		int bytes_read = 0;
-		int total = 0;
-		while ((bytes_read = read(pipefd[0], buf, BUF_SIZE)) > 0){
-			total += bytes_read;
-		}
-		printf("NUMBER OF BYTES READ FROM READ: %d\n", total);
-		printf("RETURNED STRING: %s", buf);
-
-		bytes_read = 0;
-		total = 0;
-		while ((bytes_read = read(pipefd[0], buf, BUF_SIZE)) > 0){
-			total += bytes_read;
-		}
-		printf("NUMBER OF BYTES READ FROM READ: %d\n", total);
-		printf("RETURNED STRING: %s", buf);
-
-		printf("Section C finished\n");
-		close(pipefd[0]);
-
+		sleep(5);
 		exit(0);
 
 		/* END SECTION C */

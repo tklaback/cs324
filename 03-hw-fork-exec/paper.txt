@@ -134,3 +134,48 @@ This time it returned because the write end closed the write side of the pipe an
 25.
 0 is returned by read().
 
+26. 
+exec.c runs an entirely new program after printing a few things.
+
+27.
+The final printf will be executed before the execve call.
+
+28.
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ ./exec /bin/cat
+Program "./exec" has pid 3650641. Sleeping.
+Running exec of "/bin/cat"
+
+29.
+tklaback@stronghold:~$ ps -p 3650641 -o user,pid,ppid,state,ucmd
+USER         PID    PPID S CMD
+tklaback 3650641 3650495 S exec
+tklaback@stronghold:~$ ps -p 3650641 -o user,pid,ppid,state,ucmd
+USER         PID    PPID S CMD
+tklaback 3650641 3650495 S cat
+
+30.
+The CMD field changes to cat from exec. This is because exec is
+replaced by cat after the execve call. cat inherits the pid and
+ppid of exec.
+
+31. 
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ ./exec /does_not_exist
+Program "./exec" has pid 3650864. Sleeping.
+Running exec of "/does_not_exist"
+End of program "./exec".
+
+Here, cat ended early due to an exception and returned control back to the process that it
+was created from which is why we see end of program exec.c.
+
+32.
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ echo foobar | ./fork /bin/cat
+Starting program; process has pid 3651143
+Section A;  pid 3651143
+Section A;  pid 3651144
+Program "./fork" has pid 3651144. Sleeping.
+Running exec of "/bin/cat"
+foobar
+
+33.
+
+
