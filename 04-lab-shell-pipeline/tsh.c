@@ -106,6 +106,9 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char *argv[MAXARGS];
+    parseline(cmdline, argv);
+    builtin_cmd(argv);
     return;
 }
 
@@ -232,7 +235,10 @@ int parseline(const char *cmdline, char **argv)
  *    it immediately.  
  */
 int builtin_cmd(char **argv) 
-{
+{   
+    if (strcmp(argv[0], "quit") == 0){
+        exit(0);
+    }
     return 0;     /* not a builtin command */
 }
 
