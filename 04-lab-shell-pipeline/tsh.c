@@ -109,6 +109,37 @@ void eval(char *cmdline)
     char *argv[MAXARGS];
     parseline(cmdline, argv);
     builtin_cmd(argv);
+    int argc;
+    for (argc = 0; argv[argc] != NULL; argc++){}
+
+    int cmds[argc];
+    int stdin_redir[argc];
+    int stdout_redir[argc];
+
+    int num_commands = parseargs(argv, cmds, stdin_redir, stdout_redir);
+    int pid = fork();
+    if (pid == 0){
+        // for (int command = 0; command < num_commands; command++){
+            int command = 0;
+            if (stdin_redir[command] >= 0){
+                FILE* file = fopen(argv[stdin_redir[command]], "r");
+                dup2(fileno(file), fileno(stdin));
+                close(fileno(file));
+            } else if (stdout_redir[command] >= 0){
+                FILE* file = fopen(argv[stdout_redir[command]], "w");
+                dup2(fileno(file), fileno(stdout));
+                close(fileno(file));
+            }
+        // }
+        char *envp[1];
+        envp[0] = '\0';
+        execve(argv[0], argv, envp);
+    }else {
+        setpgid(pid, pid);
+        int status;
+        wait(&status);
+    }
+
     return;
 }
 
