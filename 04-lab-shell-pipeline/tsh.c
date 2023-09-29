@@ -105,7 +105,7 @@ int main(int argc, char **argv)
  * when we type ctrl-c (ctrl-z) at the keyboard.  
 */
 
-void execute(char **argv, int *stdin_redir, int *stdout_redir, int is_first, int *pipefd){
+void execute(char **argv, int *stdin_redir, int *stdout_redir, int is_first, int *pipefd, int num_commands, int *cmds){
     int command = is_first ? 0 : 1;
     if (stdin_redir[command] >= 0){
         FILE* file = fopen(argv[stdin_redir[command]], "r");
@@ -116,20 +116,23 @@ void execute(char **argv, int *stdin_redir, int *stdout_redir, int is_first, int
         dup2(fileno(file), fileno(stdout));
         close(fileno(file));
     }
-    
-    if (is_first){
-        close(pipefd[0]);
-        dup2(pipefd[1], fileno(stdout));
-        close(pipefd[1]);
-    }else {
-        close(pipefd[1]);
-        dup2(pipefd[0], fileno(stdin));
-        close(pipefd[0]);
-    }
-
     char *envp[1];
     envp[0] = '\0';
-    execve(argv[0], argv, envp);
+    if (num_commands > 1){
+        if (is_first){
+            close(pipefd[0]);
+            dup2(pipefd[1], fileno(stdout));
+            close(pipefd[1]);
+            execve(argv[cmds[0]], &argv[cmds[0]], envp);
+        }else {
+            close(pipefd[1]);
+            dup2(pipefd[0], fileno(stdin));
+            close(pipefd[0]);
+            execve(argv[cmds[1]], &argv[cmds[1]], envp);
+        }
+    }else{
+        execve(argv[cmds[0]], &argv[cmds[0]], envp);
+    }
 }
 
 void eval(char *cmdline) 
@@ -146,31 +149,31 @@ void eval(char *cmdline)
     int stdout_redir[argc];
 
     int num_commands = parseargs(argv, cmds, stdin_redir, stdout_redir);
-    pipe(pipefd);
+    if (num_commands > 1){
+        pipe(pipefd);
+    }
 
     int pid1 = fork();
 
     if (pid1 == 0){
-        execute(argv, stdin_redir, stdout_redir, 1, pipefd);
+        execute(argv, stdin_redir, stdout_redir, 1, pipefd, num_commands, cmds);
     } else {
+        setpgid(pid1, pid1);
         int pid2 = fork();
 
         if (pid2 == 0){
-            execute(argv, stdin_redir, stdout_redir, 0, pipefd);
+            execute(argv, stdin_redir, stdout_redir, 0, pipefd, num_commands, cmds);
         } else {
+            setpgid(pid2, pid1);
+
             close(pipefd[0]);
             close(pipefd[1]);
 
-            setpgid(pid2, pid1);
-            setpgid(pid1, pid1);
-
             int status;
-            waitpid(-1, &status, 0);
-            waitpid(-1, &status, 0);
+            waitpid(pid1, &status, 0);
+            waitpid(pid2, &status, 0);
 
         }
-
-        
     }
 
     return;
