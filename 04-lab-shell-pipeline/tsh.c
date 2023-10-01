@@ -22,6 +22,7 @@ extern char **environ;      /* defined in libc */
 char prompt[] = "tsh> ";    /* command line prompt (DO NOT CHANGE) */
 int verbose = 0;            /* if true, print additional output */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
+char *envp[1];
 
 /* Function prototypes */
 
@@ -43,6 +44,7 @@ typedef void handler_t(int);
  */
 int main(int argc, char **argv) 
 {
+    envp[0] = '\0';
     char c;
     char cmdline[MAXLINE];
     int emit_prompt = 1; /* emit prompt (default) */
@@ -105,34 +107,31 @@ int main(int argc, char **argv)
  * when we type ctrl-c (ctrl-z) at the keyboard.  
 */
 
-void execute(char **argv, int *stdin_redir, int *stdout_redir, int is_first, int *pipefd, int num_commands, int *cmds){
-    int command = is_first ? 0 : 1;
-    if (stdin_redir[command] >= 0){
-        FILE* file = fopen(argv[stdin_redir[command]], "r");
+void execute(char **argv, int cmd_no, char *stdin_redir, char *stdout_redir, int *cmds, int num_commands, int *pipefd) {
+    if (stdin_redir != NULL){
+        FILE* file = fopen(stdin_redir, "r");
         dup2(fileno(file), fileno(stdin));
         close(fileno(file));
-    } if (stdout_redir[command] >= 0){
-        FILE* file = fopen(argv[stdout_redir[command]], "w");
+    } if (stdout_redir != NULL){
+        FILE* file = fopen(stdout_redir, "w");
         dup2(fileno(file), fileno(stdout));
         close(fileno(file));
     }
-    char *envp[1];
-    envp[0] = '\0';
     if (num_commands > 1){
-        if (is_first){
+        if (cmd_no % 2 == 0){
             close(pipefd[0]);
             dup2(pipefd[1], fileno(stdout));
             close(pipefd[1]);
-            execve(argv[cmds[0]], &argv[cmds[0]], envp);
         }else {
             close(pipefd[1]);
             dup2(pipefd[0], fileno(stdin));
             close(pipefd[0]);
-            execve(argv[cmds[1]], &argv[cmds[1]], envp);
         }
     }else{
-        execve(argv[cmds[0]], &argv[cmds[0]], envp);
+        close(pipefd[0]);
+        close(pipefd[1]);
     }
+    execve(argv[cmds[cmd_no]], &argv[cmds[cmd_no]], envp);
 }
 
 void eval(char *cmdline) 
@@ -149,13 +148,14 @@ void eval(char *cmdline)
     int stdout_redir[argc];
 
     int num_commands = parseargs(argv, cmds, stdin_redir, stdout_redir);
+    /*
     if (num_commands > 1){
         pipe(pipefd);
     }
 
     int pid1 = fork();
 
-    if (pid1 == 0){
+    if (pid1 == 0) {
         execute(argv, stdin_redir, stdout_redir, 1, pipefd, num_commands, cmds);
     } else {
         setpgid(pid1, pid1);
@@ -172,6 +172,44 @@ void eval(char *cmdline)
             int status;
             waitpid(pid1, &status, 0);
             waitpid(pid2, &status, 0);
+
+        }
+    }
+    */
+
+    pid_t process, first_child;
+    int is_first = 1;
+    for (int cmd = 0; cmd < num_commands; cmd++){
+        if (cmd != num_commands - 1){
+            pipe(pipefd);
+        }
+        if ((process = fork()) == -1){
+            perror("ERROR FORKING");
+        }  
+        if (process == 0){
+            execute(
+                argv, 
+                cmd, 
+                stdin_redir[cmd] == -1 ? NULL : argv[stdin_redir[cmd]], 
+                stdout_redir[cmd] == -1 ? NULL : argv[stdout_redir[cmd]],
+                cmds,
+                num_commands,
+                pipefd
+            );
+            exit(0);
+        }
+        else{
+            if (is_first){
+                first_child = process;
+                is_first = 0;
+            }
+            if (cmd != num_commands - 1){
+                close(pipefd[0]);
+                close(pipefd[1]);
+            }
+            setpgid(process, first_child);
+            int status;
+            waitpid(process, &status, 0);
 
         }
     }
