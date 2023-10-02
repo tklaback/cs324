@@ -179,6 +179,7 @@ void eval(char *cmdline)
             write_end,
             read_end
             );
+            exit(1);
         }else {
             if (cmd == 0){
                 first_child = process;
@@ -190,14 +191,16 @@ void eval(char *cmdline)
                 close(write_end);
             
             processes[cur_process++] = process;
+            if (cmd == num_commands - 1){
+                int status;
+                for (int i = 0; i < argc; i++){
+                    waitpid(processes[i], &status, 0);
+                }
+            }
         }
     }
+    int status;
 
-    for (int num = 0; num < argc; num++){
-        int status;
-        waitpid(processes[num], &status, 0);
-    }
-    
     return;
 }
 
