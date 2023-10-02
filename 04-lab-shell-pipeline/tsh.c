@@ -107,7 +107,7 @@ int main(int argc, char **argv)
  * when we type ctrl-c (ctrl-z) at the keyboard.  
 */
 
-void execute(char **argv, int cmd_no, char *stdin_redir, char *stdout_redir, int *cmds, int is_last, int *pipefd) {
+void execute(char **argv, int cmd_no, char *stdin_redir, char *stdout_redir, int *cmds, int is_last, int is_first, int write_end, int read_end) {
     if (stdin_redir != NULL){
         FILE* file = fopen(stdin_redir, "r");
         dup2(fileno(file), fileno(stdin));
@@ -117,15 +117,24 @@ void execute(char **argv, int cmd_no, char *stdin_redir, char *stdout_redir, int
         dup2(fileno(file), fileno(stdout));
         close(fileno(file));
     }
-    if (cmd_no % 2 == 0){
-        close(pipefd[0]);
-        dup2(pipefd[1], fileno(stdout));
-        close(pipefd[1]);
-    }else {
-        close(pipefd[1]);
-        dup2(pipefd[0], fileno(stdin));
-        close(pipefd[0]);
+
+    if (is_first && is_last){}
+    else{
+        if (is_first){
+            dup2(write_end, fileno(stdout));
+            close(write_end);
+        }
+        else if (is_last){
+            dup2(read_end, fileno(stdin));
+            close(read_end);
+        }else {
+            dup2(read_end, fileno(stdin));
+            close(read_end);
+            dup2(write_end, fileno(stdout));
+            close(write_end);
+        }
     }
+
     execve(argv[cmds[cmd_no]], &argv[cmds[cmd_no]], envp);
 }
 
@@ -145,41 +154,50 @@ void eval(char *cmdline)
     int num_commands = parseargs(argv, cmds, stdin_redir, stdout_redir);
 
     pid_t process, first_child;
-    int is_first = 1;
+    int write_end;
+    int read_end;
+
+    int processes[num_commands];
+    int cur_process = 0;
     for (int cmd = 0; cmd < num_commands; cmd++){
+        read_end = pipefd[0];
         if (cmd != num_commands - 1){
             pipe(pipefd);
+            
+            write_end = pipefd[1];
         }
-        if ((process = fork()) == -1){
-            perror("ERROR FORKING");
-        }  
+
+        if ((process = fork()) < 1){}
         if (process == 0){
-            execute(
-                argv, 
-                cmd, 
-                stdin_redir[cmd] == -1 ? NULL : argv[stdin_redir[cmd]], 
-                stdout_redir[cmd] == -1 ? NULL : argv[stdout_redir[cmd]],
-                cmds,
-                (cmd == num_commands - 1),
-                pipefd
+            execute(argv, 
+            cmd, 
+            stdin_redir[cmd] == -1 ? NULL : argv[stdin_redir[cmd]], 
+            stdout_redir[cmd] == -1 ? NULL : argv[stdout_redir[cmd]], 
+            cmds, 
+            cmd == num_commands - 1, 
+            cmd == 0,
+            write_end,
+            read_end
             );
-            exit(0);
-        }
-        else{
-            if (is_first){
+        }else {
+            if (cmd == 0){
                 first_child = process;
-                is_first = 0;
             }
             setpgid(process, first_child);
-            close(pipefd[0]);
-            close(pipefd[1]);
+            if (cmd != 0)
+                close(read_end);
+            if (cmd != num_commands - 1)
+                close(write_end);
+            
+            processes[cur_process++] = process;
         }
     }
-    for (int num = 0; num < num_commands; num++){
-        int status;
-        wait(status);
-    }
 
+    for (int num = 0; num < argc; num++){
+        int status;
+        waitpid(processes[num], &status, 0);
+    }
+    
     return;
 }
 
