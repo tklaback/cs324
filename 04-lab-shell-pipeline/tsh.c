@@ -106,6 +106,69 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    int pipefd[2];
+    char *argv[MAXARGS];
+    parseline(cmdline, argv);
+    builtin_cmd(argv);
+    int argc;
+    for (argc = 0; argv[argc] != NULL; argc++){}
+
+    int cmds[argc];
+    int stdin_redir[argc];
+    int stdout_redir[argc];
+
+    int num_commands = parseargs(argv, cmds, stdin_redir, stdout_redir);
+
+    pid_t process, first_child;
+    int write_end;
+    int read_end;
+
+    int processes[num_commands];
+    int cur_process = 0;
+    for (int cmd = 0; cmd < num_commands; cmd++){
+        read_end = pipefd[0];
+        if (cmd != num_commands - 1){
+            if (pipe(pipefd) < 0){
+                perror("PIPE NOT CREATED PROPERLY");
+            }
+        }
+        write_end = pipefd[1];
+
+        if ((process = fork()) < 0){
+            perror("FORK DID NOT WORK");
+        }
+        if (process == 0){
+            execute(argv, 
+            cmd, 
+            stdin_redir[cmd] == -1 ? NULL : argv[stdin_redir[cmd]], 
+            stdout_redir[cmd] == -1 ? NULL : argv[stdout_redir[cmd]], 
+            cmds, 
+            cmd == num_commands - 1, 
+            cmd == 0,
+            write_end,
+            read_end
+            );
+            exit(1);
+        }else {
+            if (cmd == 0){
+                first_child = process;
+            }
+            setpgid(process, first_child);
+            if (cmd != 0)
+                close(read_end);
+            if (cmd != num_commands - 1)
+                close(write_end);
+            
+            processes[cur_process++] = process;
+            if (cmd == num_commands - 1){
+                int status;
+                for (int i = 0; i < argc; i++){
+                    waitpid(processes[i], &status, 0);
+                }
+            }
+        }
+    }
+
     return;
 }
 

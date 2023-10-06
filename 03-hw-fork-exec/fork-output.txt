@@ -1,0 +1,2 @@
+BEFORE FORK (3)
+foobar

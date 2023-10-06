@@ -25,6 +25,20 @@ int main(int argc, char *argv[]) {
 		sleep(30);
 		printf("Section B done sleeping\n");
 
+<<<<<<< Updated upstream
+=======
+		printf("Program \"%s\" has pid %d. Sleeping.\n", argv[0], getpid());
+
+		if (argc <= 1) {
+			printf("No program to exec.  Exiting...\n");
+			exit(0);
+		}
+
+		printf("Running exec of \"%s\"\n", argv[1]);
+		dup2(fileno(f), 1);
+		execve(argv[1], &argv[1], newenviron);
+		printf("End of program \"%s\".\n", argv[0]);
+>>>>>>> Stashed changes
 		exit(0);
 
 		/* END SECTION B */

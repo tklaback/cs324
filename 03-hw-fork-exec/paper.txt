@@ -1,0 +1,191 @@
+1. This program is meant to demonstrate what happens when
+a child process terminates before the parent process.
+2. A, C
+3. A, B
+4.
+    ps -f --forest -o user,pid,ppid,state,ucmd
+    tklaback 3487101 3487100 S bash
+    tklaback 3487180 3487101 S  \_ fork
+    tklaback 3487181 3487180 S      \_ fork
+
+    ps -f --forest -o user,pid,ppid,state,ucmd
+    tklaback 3351507 3351506 S bash
+    tklaback 3352786 3351507 S  \_ fork
+    tklaback 3352787 3352786 Z      \_ fork <defunct>
+
+5. The difference between these two outputs is that after the first 30 seconds, 
+the child process exits and the parent is still alive. Because the parent does not
+reap the child, the child remains a zombie for the last 30 seconds until the
+parent terminates. The first 30 seconds, however, the child is running.
+
+6. You could add a wait(int *status) in section c, where the parent code executes
+in order to reap the child as soon as it terminates.
+
+7. This would most likely go before the sleep(60) in section C.
+
+8.
+    tklaback@mainstay:~$ ps -f --forest -o user,pid,ppid,state,ucmd
+    USER         PID    PPID S CMD
+    tklaback 3487109 3487100 S bash
+    tklaback 3487784 3487109 R  \_ ps
+    tklaback 3487101 3487100 S bash
+    tklaback 3487775 3487101 S  \_ fork
+    tklaback 3487776 3487775 S      \_ fork
+    tklaback 3487051 3487046 S bash
+    tklaback 3487098 3487051 S  \_ tmux: client
+    tklaback@mainstay:~$ ps -f --forest -o user,pid,ppid,state,ucmd
+    USER         PID    PPID S CMD
+    tklaback 3487109 3487100 S bash
+    tklaback 3487793 3487109 R  \_ ps
+    tklaback 3487101 3487100 S bash
+    tklaback 3487775 3487101 S  \_ fork
+    tklaback 3487051 3487046 S bash
+    tklaback 3487098 3487051 S  \_ tmux: client
+
+9. Now, the difference between the two outputs is the first one shows both
+parent and child processes running, but the second one just shows the parent 
+process since its child process terminated and was reaped.
+
+10.
+
+    tklaback@mainstay:~$ ps -f --forest -o user,pid,ppid,state,ucmd
+    USER         PID    PPID S CMD
+    tklaback 3487109 3487100 S bash
+    tklaback 3488121 3487109 R  \_ ps
+    tklaback 3487101 3487100 S bash
+    tklaback 3488105 3487101 S  \_ fork
+    tklaback 3488106 3488105 S      \_ fork
+    tklaback 3487051 3487046 S bash
+    tklaback 3487098 3487051 S  \_ tmux: client
+
+    tklaback@mainstay:~$ ps -f --forest -o user,pid,ppid,state,ucmd
+    USER         PID    PPID S CMD
+    tklaback 3487109 3487100 S bash
+    tklaback 3488148 3487109 R  \_ ps
+    tklaback 3487101 3487100 S bash
+    tklaback 3487051 3487046 S bash
+    tklaback 3487098 3487051 S  \_ tmux: client
+    tklaback 3488106       1 S fork
+
+11. The difference between these two outputs is that in the first output, both 
+parent and child processes are running. Because the parent process exits before
+the child process, the second output shows that the parent process is no longer
+running and that the child's new parent process is the init process.
+
+12.
+BEFORE FORK (3)
+SECTION C (3)
+SECTION B (3)
+
+13. All of the processes wrote to the file.
+
+question: If the parent process already called fclose on the file, how is the child still able to write to
+it?
+
+14. Based on the output to stdout and to fork-output.txt, the child inherited all of the open file descriptors
+from the parent. The child can modify the same files as the parent.
+
+15. Based on the output in fork-output.txt, the second write picked up where the first write left off. This
+happened because both processes contain the same open file descriptor.
+
+16. Write 3 picked up where the second left off because it was still operating
+under the opened file; the file had not yet been closed, therefore its counter (
+where it is in the file) is not set back to 0.
+ 
+17. The thrid write does succeed because in the man page of close(2) we read: 
+Any  record  locks  (see  fc‐ntl(2))  held on the file it was associated with, and owned by
+the process, are removed (regardless of  the  file  descriptor that was used to obtain the lock).
+this means that fclose only applies to the process that it is called in. It detaches the
+the current process's file descriptor from the description, but the child processes'
+file descriptors still point at all of the files it inherited.
+
+18. 
+Starting program; process has pid 3679074
+Section A;  pid 3679074
+Section A;  pid 3679081
+Section B
+SIZE OF STR: 22
+Section B finished
+Section C
+NUMBER OF BYTES READ FROM READ: 22
+RETURNED STRING: hello from Section B
+Section C finished
+
+19. 
+Yes, the order does matter because as we see on the man page: The  child inherits 
+copies of the parent's set of open file descriptors. If pipe was not called before,
+then the child would not have the ability to read or write to the pipe.
+
+20.
+No, one end is designated as the read end and the other as the write end.
+The man page descirbes this as unidirectional.
+
+21. 0 bytes
+
+22. 
+If a process attempts to read from an empty pipe, then read(2) will block until data is available.
+
+23.
+Read returned because the first time because it read 0 bytes from the write end.
+
+24.
+This time it returned because the write end closed the write side of the pipe and read saw an eof.
+
+25.
+0 is returned by read().
+
+26. 
+exec.c runs an entirely new program after printing a few things.
+
+27.
+The final printf will be executed before the execve call.
+
+28.
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ ./exec /bin/cat
+Program "./exec" has pid 3650641. Sleeping.
+Running exec of "/bin/cat"
+
+29.
+tklaback@stronghold:~$ ps -p 3650641 -o user,pid,ppid,state,ucmd
+USER         PID    PPID S CMD
+tklaback 3650641 3650495 S exec
+tklaback@stronghold:~$ ps -p 3650641 -o user,pid,ppid,state,ucmd
+USER         PID    PPID S CMD
+tklaback 3650641 3650495 S cat
+
+30.
+The CMD field changes to cat from exec. This is because exec is
+replaced by cat after the execve call. cat inherits the pid and
+ppid of exec.
+
+31. 
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ ./exec /does_not_exist
+Program "./exec" has pid 3650864. Sleeping.
+Running exec of "/does_not_exist"
+End of program "./exec".
+
+Here, cat ended early due to an exception and returned control back to the process that it
+was created from which is why we see end of program exec.c.
+
+32.
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ echo foobar | ./fork /bin/cat
+Starting program; process has pid 3651143
+Section A;  pid 3651143
+Section A;  pid 3651144
+Program "./fork" has pid 3651144. Sleeping.
+Running exec of "/bin/cat"
+foobar
+
+33.
+tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ echo foobar | ./fork /bin/cat
+Starting program; process has pid 3651326
+Section A;  pid 3651326
+Section A;  pid 3651327
+Program "./fork" has pid 3651327. Sleeping.
+Running exec of "/bin/cat"
+
+BEFORE FORK (3)
+foobar
+
+34.
+The old output only shows BEFORE FORK (3) whereas the new one shows foobar as well!
