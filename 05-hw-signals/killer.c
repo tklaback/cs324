@@ -33,13 +33,14 @@ int main(int argc, char *argv[]) {
 		sleep(1);
 		break;
 	case '1':
-		kill(pid, SIGPWR);
+		kill(pid, 12);
 		sleep(1);
+		kill(pid, SIGTERM);
 		break;
 	case '2':
 		kill(pid, 12);
 		kill(pid, SIGHUP);
-		sleep(1);
+		sleep(5);
 		kill(pid, SIGTERM);
 		break;
 	case '3':
