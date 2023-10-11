@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -28,12 +29,30 @@ int main(int argc, char *argv[]) {
 
 	switch (scenario[0]) {
 	case '0':
+		kill(pid, SIGHUP);
+		sleep(1);
 		break;
 	case '1':
+		kill(pid, SIGPWR);
+		sleep(1);
 		break;
 	case '2':
+		kill(pid, 12);
+		sleep(1);
+		kill(pid, SIGHUP);
+		sleep(1);
+		kill(pid, SIGHUP);
+		sleep(9);
+		kill(pid, SIGTERM);
 		break;
 	case '3':
+		kill(pid, 12);
+		sleep(1);
+		kill(pid, SIGHUP);
+		sleep(1);
+		kill(pid, SIGINT);
+		sleep(9);
+		kill(pid, SIGTERM);
 		break;
 	case '4':
 		break;
