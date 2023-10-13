@@ -196,8 +196,7 @@ void eval(char *cmdline)
         sigprocmask(SIG_SETMASK, &prev_mask, NULL);
 
         if (!is_bg){
-            int status;
-            waitpid(pid, &status, 0);
+            waitfg(pid);
         }else {
             struct job_t *job = getjobpid(jobs, pid);
             printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
@@ -359,7 +358,12 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-    return;
+    struct job_t *job = getjobpid(jobs, pid);
+
+    while (job != NULL){
+        sleep(1);
+        job = getjobpid(jobs, pid);
+    }
 }
 
 /*****************
@@ -380,16 +384,11 @@ void sigchld_handler(int sig)
     
     int status;
     int return_val;
-    while (1){
-        if ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) == 0){
-            if (verbose)
-                printf("looping\n");
-            break;
-        }
+    while ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) != 0){
         if (WIFSIGNALED(status)){
-            deletejob(jobs, return_val);
             int jid = pid2jid(return_val);
-            printf("[%d] (%d) STOPPED\n", jid, pid);
+            printf("[%d] (%d) STOPPED\n", jid, return_val);
+            deletejob(jobs, return_val);
         } else if (WIFEXITED(status)){
             deletejob(jobs, return_val);
         } else if (WIFSTOPPED(status)){
