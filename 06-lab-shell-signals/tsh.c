@@ -170,37 +170,39 @@ void eval(char *cmdline)
     char *argv[MAXARGS];
     int is_bg = parseline(cmdline, argv);
 
-    builtin_cmd(argv);
-    pid_t pid;
-    char *envp[] = {'\0'};
+    if (builtin_cmd(argv) == 0){
 
-    sigset_t mask, prev_mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT | SIGCHLD | SIGTSTP);
-    sigprocmask(SIG_BLOCK, &mask, &prev_mask);
+        pid_t pid;
+        char *envp[] = {'\0'};
 
-    if ((pid = fork()) < 0){
-        perror("ERROR FORKING");
-    }
-    if (pid == 0){
-        sigprocmask(SIG_SETMASK, &prev_mask, NULL);
-        if (execve(argv[0], argv, envp) == -1){
-            perror("Command not found");
-            exit(0);
+        sigset_t mask, prev_mask;
+        sigemptyset(&mask);
+        sigaddset(&mask, SIGINT | SIGCHLD | SIGTSTP);
+        sigprocmask(SIG_BLOCK, &mask, &prev_mask);
+
+        if ((pid = fork()) < 0){
+            perror("ERROR FORKING");
         }
-    }else {
-        
-        setpgid(pid, pid);
-        addjob(jobs, pid, pid, is_bg ? BG : FG, cmdline);
-
-        sigprocmask(SIG_SETMASK, &prev_mask, NULL);
-
-        if (!is_bg){
-            waitfg(pid);
+        if (pid == 0){
+            sigprocmask(SIG_SETMASK, &prev_mask, NULL);
+            if (execve(argv[0], argv, envp) == -1){
+                perror("Command not found");
+                exit(0);
+            }
         }else {
-            struct job_t *job = getjobpid(jobs, pid);
-            printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
-            fflush(stdout);
+            
+            setpgid(pid, pid);
+            addjob(jobs, pid, pid, is_bg ? BG : FG, cmdline);
+
+            sigprocmask(SIG_SETMASK, &prev_mask, NULL);
+
+            if (!is_bg){
+                waitfg(pid);
+            }else {
+                struct job_t *job = getjobpid(jobs, pid);
+                printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
+                fflush(stdout);
+            }
         }
     }
     return;
@@ -336,10 +338,12 @@ int builtin_cmd(char **argv)
 
     if (strcmp(cmd, "quit") == 0){
         exit(0);
-    }else if (strcmp(cmd, "fg") == 0 || strcmp(cmd, "bg")){
+    }else if (strcmp(cmd, "fg") == 0 || strcmp(cmd, "bg") == 0){
         do_bgfg(argv);
+        return 1;
     }else if (strcmp(cmd, "jobs") == 0){
         listjobs(jobs);
+        return 1;
     }
 
     return 0;     /* not a builtin command */
