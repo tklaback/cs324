@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     /* Install the signal handlers */
 
     /* These are the ones you will need to implement */
-    Signal(SIGINT,  sigint_handler);   /* ctrl-c */
+    // Signal(SIGINT,  sigint_handler);   /* ctrl-c */
     Signal(SIGTSTP, sigtstp_handler);  /* ctrl-z */
     Signal(SIGCHLD, sigchld_handler);  /* Terminated or stopped child */
 
@@ -167,6 +167,28 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char *argv[MAXARGS];
+    parseline(cmdline, argv);
+
+    builtin_cmd(argv);
+    pid_t pid;
+    char *envp[] = {'\0'};
+
+    sigset_t mask, prev_mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT | SIGCHLD | SIGTSTP);
+    sigprocmask(SIG_BLOCK, &mask, &prev_mask);
+
+    if ((pid = fork()) < 0){
+        perror("ERROR FORKING");
+    }
+    if (pid == 0){
+        sigprocmask(SIG_SETMASK, &prev_mask, NULL);
+        if (execve(argv[0], argv, envp) == -1){
+            perror("Command not found");
+            exit(0);
+        }
+    }
     return;
 }
 
@@ -294,6 +316,19 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+
+    char *cmd = argv[0];
+    
+
+    if (strcmp(cmd, "quit") == 0){
+        exit(0);
+    }else if (strcmp(cmd, "fg") == 0 || strcmp(cmd, "bg")){
+        do_bgfg(argv);
+    }else if (strcmp(cmd, "jobs") == 0){
+        // struct job_t jobs;
+        // listjobs(&jobs);
+    }
+
     return 0;     /* not a builtin command */
 }
 
