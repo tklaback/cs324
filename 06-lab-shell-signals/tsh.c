@@ -360,9 +360,8 @@ void waitfg(pid_t pid)
 {
     struct job_t *job = getjobpid(jobs, pid);
 
-    while (job != NULL){
+    while (job->state == FG){
         sleep(1);
-        job = getjobpid(jobs, pid);
     }
 }
 
