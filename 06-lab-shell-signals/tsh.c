@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     /* Install the signal handlers */
 
     /* These are the ones you will need to implement */
-    // Signal(SIGINT,  sigint_handler);   /* ctrl-c */
+    Signal(SIGINT,  sigint_handler);   /* ctrl-c */
     Signal(SIGTSTP, sigtstp_handler);  /* ctrl-z */
     Signal(SIGCHLD, sigchld_handler);  /* Terminated or stopped child */
 
@@ -390,14 +390,14 @@ void sigchld_handler(int sig)
     while ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
         if (WIFSIGNALED(status)){
             int jid = pid2jid(return_val);
-            printf("Job[%d](%d)terminatedbysignal2\n", jid, return_val);
+            printf("Job [%d] (%d) terminated by signal 2\n", jid, return_val);
             deletejob(jobs, return_val);
         } else if (WIFEXITED(status)){
             deletejob(jobs, return_val);
         } else if (WIFSTOPPED(status)){
             struct job_t *job = getjobpid(jobs, return_val);
             job->state = ST;
-            printf("Job[%d](%d)stoppedbysignal20\n", job->jid, job->pid); fflush(stdout);
+            printf("Job [%d] (%d) stopped by signal 20\n", job->jid, job->pid); fflush(stdout);
         }
     }
     return;
@@ -410,6 +410,10 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    if (verbose)
+		printf("sigint_handler: entering\n");
+    pid_t gpid = fgpid(jobs);
+    kill(-gpid, sig);
     return;
 }
 
@@ -420,6 +424,11 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+    if (verbose)
+		printf("sigstp_handler: entering\n");
+    
+    pid_t gpid = fgpid(jobs);
+    kill(-gpid, sig);
     return;
 }
 
