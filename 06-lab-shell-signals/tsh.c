@@ -354,6 +354,22 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv) 
 {
+    // add error check to make shure arg was passed
+    if (argv[1][0] == '%'){
+        char job_arr[8];
+        sprintf(job_arr, "%s", argv[1] + 1);
+        int jid = atoi(job_arr);
+        struct job_t *job;
+        if ((job = getjobjid(jobs, jid)) == NULL){
+            printf("%s: No such job\n", argv[1]);
+        }
+    }else{
+        int pid = atoi(argv[1]);
+        struct job_t *job;
+        if ((job = getjobpid(jobs, pid)) == NULL){
+            printf("(%s): No such process\n", argv[1]);
+        }
+    }
     return;
 }
 
