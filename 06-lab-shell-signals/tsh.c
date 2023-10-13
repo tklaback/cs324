@@ -168,7 +168,7 @@ int main(int argc, char **argv)
 void eval(char *cmdline) 
 {
     char *argv[MAXARGS];
-    parseline(cmdline, argv);
+    int is_bg = parseline(cmdline, argv);
 
     builtin_cmd(argv);
     pid_t pid;
@@ -187,6 +187,28 @@ void eval(char *cmdline)
         if (execve(argv[0], argv, envp) == -1){
             perror("Command not found");
             exit(0);
+        }
+    }else {
+        
+        setpgid(pid, pid);
+        struct job_t job;
+        job.pid = pid;
+        job.pgid = pid;
+        job.state = is_bg ? BG : FG;
+        job.jid = nextjid;
+        strcpy(job.cmdline, cmdline);
+
+        jobs[nextjid - 1] = job;
+        nextjid++;
+
+        sigprocmask(SIG_SETMASK, &prev_mask, NULL);
+
+        if (!is_bg){
+            int status;
+            waitpid(pid, &status, 0);
+        }else {
+            printf("[%d] (%d) %s", job.jid, job.pid, job.cmdline);
+            fflush(stdout);
         }
     }
     return;
@@ -325,8 +347,7 @@ int builtin_cmd(char **argv)
     }else if (strcmp(cmd, "fg") == 0 || strcmp(cmd, "bg")){
         do_bgfg(argv);
     }else if (strcmp(cmd, "jobs") == 0){
-        // struct job_t jobs;
-        // listjobs(&jobs);
+        listjobs(jobs);
     }
 
     return 0;     /* not a builtin command */
