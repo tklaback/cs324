@@ -352,23 +352,42 @@ int builtin_cmd(char **argv)
 /* 
  * do_bgfg - Execute the builtin bg and fg commands
  */
+void change_ground(struct job_t * job, int to_bg){
+    job->state = to_bg ? BG : FG;
+    kill(job->pid, SIGCONT);
+    if (!to_bg){
+        waitfg(job->pid);
+    }else {
+        printf("[%d] (%d) %s\n", job->jid, job->pgid, job->cmdline);
+    }
+}
+
 void do_bgfg(char **argv) 
 {
-    // add error check to make shure arg was passed
-    if (argv[1][0] == '%'){
-        char job_arr[8];
-        sprintf(job_arr, "%s", argv[1] + 1);
-        int jid = atoi(job_arr);
-        struct job_t *job;
-        if ((job = getjobjid(jobs, jid)) == NULL){
-            printf("%s: No such job\n", argv[1]);
+    int idx;
+    for (idx = 0; argv[idx] != NULL; idx++){}
+    if (idx > 1){
+        if (argv[1][0] == '%'){
+            char job_arr[8];
+            sprintf(job_arr, "%s", argv[1] + 1);
+            int jid = atoi(job_arr);
+            struct job_t *job;
+            if ((job = getjobjid(jobs, jid)) == NULL){
+                printf("%s: No such job\n", argv[1]);
+            }else {
+                strcmp(argv[0], "bg") == 0 ? change_ground(job, 1) : change_ground(job, 0);
+            }
+        }else{
+            int pid = atoi(argv[1]);
+            struct job_t *job;
+            if ((job = getjobpid(jobs, pid)) == NULL){
+                printf("(%s): No such process\n", argv[1]);
+            }else {
+                strcmp(argv[0], "bg") == 0 ? change_ground(job, 1) : change_ground(job, 0);
+            }
         }
-    }else{
-        int pid = atoi(argv[1]);
-        struct job_t *job;
-        if ((job = getjobpid(jobs, pid)) == NULL){
-            printf("(%s): No such process\n", argv[1]);
-        }
+    }else {
+        printf("bg command requires PID or %%jobid argument\n");
     }
     return;
 }
