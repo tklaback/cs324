@@ -191,15 +191,7 @@ void eval(char *cmdline)
     }else {
         
         setpgid(pid, pid);
-        struct job_t job;
-        job.pid = pid;
-        job.pgid = pid;
-        job.state = is_bg ? BG : FG;
-        job.jid = nextjid;
-        strcpy(job.cmdline, cmdline);
-
-        jobs[nextjid - 1] = job;
-        nextjid++;
+        addjob(jobs, pid, pid, is_bg ? BG : FG, cmdline);
 
         sigprocmask(SIG_SETMASK, &prev_mask, NULL);
 
@@ -207,7 +199,8 @@ void eval(char *cmdline)
             int status;
             waitpid(pid, &status, 0);
         }else {
-            printf("[%d] (%d) %s", job.jid, job.pid, job.cmdline);
+            struct job_t *job = getjobpid(jobs, pid);
+            printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
             fflush(stdout);
         }
     }
@@ -382,6 +375,31 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
+    // if (verbose)
+    //     printf("sigchld_handler: entering\n");
+    
+    int status;
+    int return_val;
+    while (1){
+        if ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) == 0){
+            if (verbose)
+                printf("looping\n");
+            break;
+        }
+        if (WIFSIGNALED(status)){
+            deletejob(jobs, return_val);
+            int jid = pid2jid(return_val);
+            printf("[%d] (%d) STOPPED\n", jid, pid);
+        } else if (WIFEXITED(status)){
+            deletejob(jobs, return_val);
+        } else if (WIFSTOPPED(status)){
+            struct job_t *job = getjobpid(jobs, return_val);
+            job->state = ST;
+            printf("[%d] (%d) %s STOPPED\n", job->jid, job->pid, job->cmdline); fflush(stdout);
+        }
+    }
+    
+
     return;
 }
 
