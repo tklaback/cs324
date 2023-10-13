@@ -384,7 +384,7 @@ void sigchld_handler(int sig)
     
     int status;
     int return_val;
-    while ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) != 0){
+    while ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
         if (WIFSIGNALED(status)){
             int jid = pid2jid(return_val);
             printf("[%d] (%d) STOPPED\n", jid, return_val);
@@ -397,8 +397,6 @@ void sigchld_handler(int sig)
             printf("[%d] (%d) %s STOPPED\n", job->jid, job->pid, job->cmdline); fflush(stdout);
         }
     }
-    
-
     return;
 }
 
