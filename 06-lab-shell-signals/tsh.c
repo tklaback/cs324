@@ -354,9 +354,9 @@ int builtin_cmd(char **argv)
  */
 void change_ground(struct job_t * job, int to_bg){
     job->state = to_bg ? BG : FG;
-    kill(job->pid, SIGCONT);
+    kill(-job->pgid, SIGCONT);
     if (!to_bg){
-        waitfg(job->pid);
+        waitfg(job->pgid);
     }else {
         printf("[%d] (%d) %s\n", job->jid, job->pgid, job->cmdline);
     }
