@@ -186,7 +186,7 @@ void eval(char *cmdline)
         if (pid == 0){
             sigprocmask(SIG_SETMASK, &prev_mask, NULL);
             if (execve(argv[0], argv, envp) == -1){
-                perror("Command not found");
+                printf("%s: Command not found\n", argv[0]);
                 exit(0);
             }
         }else {
@@ -367,27 +367,37 @@ void do_bgfg(char **argv)
     int idx;
     for (idx = 0; argv[idx] != NULL; idx++){}
     if (idx > 1){
-        if (argv[1][0] == '%'){
-            char job_arr[8];
-            sprintf(job_arr, "%s", argv[1] + 1);
-            int jid = atoi(job_arr);
-            struct job_t *job;
-            if ((job = getjobjid(jobs, jid)) == NULL){
-                printf("%s: No such job\n", argv[1]);
-            }else {
-                strcmp(argv[0], "bg") == 0 ? change_ground(job, 1) : change_ground(job, 0);
+        if (!isalpha(argv[1][0])){
+            if (argv[1][0] == '%'){
+                char job_arr[8];
+                sprintf(job_arr, "%s", argv[1] + 1);
+                int jid = atoi(job_arr);
+                struct job_t *job;
+                if ((job = getjobjid(jobs, jid)) == NULL){
+                    printf("%s: No such job\n", argv[1]);
+                }else {
+                    strcmp(argv[0], "bg") == 0 ? change_ground(job, 1) : change_ground(job, 0);
+                }
+            }else{
+                int pid = atoi(argv[1]);
+                struct job_t *job;
+                if ((job = getjobpid(jobs, pid)) == NULL){
+                    printf("(%s): No such process\n", argv[1]);
+                }else {
+                    strcmp(argv[0], "bg") == 0 ? change_ground(job, 1) : change_ground(job, 0);
+                }
             }
-        }else{
-            int pid = atoi(argv[1]);
-            struct job_t *job;
-            if ((job = getjobpid(jobs, pid)) == NULL){
-                printf("(%s): No such process\n", argv[1]);
-            }else {
-                strcmp(argv[0], "bg") == 0 ? change_ground(job, 1) : change_ground(job, 0);
-            }
+        }else {
+            if (strcmp(argv[0], "bg") == 0)
+                printf("bg: argument mustbe a PID or %%jobid\n");
+            else
+                printf("fg: argument mustbe a PID or %%jobid\n");
         }
     }else {
-        printf("bg command requires PID or %%jobid argument\n");
+        if (strcmp(argv[0], "bg") == 0)
+            printf("bg command requires PID or %%jobid argument\n");
+        else
+            printf("fg command requires PID or %%jobid argument\n");
     }
     return;
 }
