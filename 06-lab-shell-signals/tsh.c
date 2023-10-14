@@ -435,14 +435,14 @@ void sigchld_handler(int sig)
     while ((return_val = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
         if (WIFSIGNALED(status)){
             int jid = pid2jid(return_val);
-            printf("Job [%d] (%d) terminated by signal 2\n", jid, return_val);
+            printf("Job [%d] (%d) terminated by signal %d\n", jid, return_val, WTERMSIG(status));
             deletejob(jobs, return_val);
         } else if (WIFEXITED(status)){
             deletejob(jobs, return_val);
         } else if (WIFSTOPPED(status)){
             struct job_t *job = getjobpid(jobs, return_val);
             job->state = ST;
-            printf("Job [%d] (%d) stopped by signal 20\n", job->jid, job->pid); fflush(stdout);
+            printf("Job [%d] (%d) stopped by signal %d\n", job->jid, job->pid, WSTOPSIG(status)); fflush(stdout);
         }
     }
     return;
