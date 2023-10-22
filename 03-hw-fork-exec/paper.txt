@@ -177,6 +177,7 @@ Running exec of "/bin/cat"
 foobar
 
 33.
+<<<<<<< HEAD
 tklaback@stronghold:~/byu-cs324/03-hw-fork-exec$ echo foobar | ./fork /bin/cat
 Starting program; process has pid 3651326
 Section A;  pid 3651326
@@ -189,3 +190,7 @@ foobar
 
 34.
 The old output only shows BEFORE FORK (3) whereas the new one shows foobar as well!
+=======
+
+
+>>>>>>> assignment_1

@@ -22,6 +22,7 @@ extern char **environ;      /* defined in libc */
 char prompt[] = "tsh> ";    /* command line prompt (DO NOT CHANGE) */
 int verbose = 0;            /* if true, print additional output */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
+char *envp[1];
 
 /* Function prototypes */
 
@@ -43,6 +44,7 @@ typedef void handler_t(int);
  */
 int main(int argc, char **argv) 
 {
+    envp[0] = '\0';
     char c;
     char cmdline[MAXLINE];
     int emit_prompt = 1; /* emit prompt (default) */
@@ -104,6 +106,38 @@ int main(int argc, char **argv)
  * background children don't receive SIGINT (SIGTSTP) from the kernel
  * when we type ctrl-c (ctrl-z) at the keyboard.  
 */
+
+void execute(char **argv, int cmd_no, char *stdin_redir, char *stdout_redir, int *cmds, int is_last, int is_first, int write_end, int read_end) {
+    if (stdin_redir != NULL){
+        FILE* file = fopen(stdin_redir, "r");
+        dup2(fileno(file), fileno(stdin));
+        close(fileno(file));
+    } if (stdout_redir != NULL){
+        FILE* file = fopen(stdout_redir, "w");
+        dup2(fileno(file), fileno(stdout));
+        close(fileno(file));
+    }
+
+    if (is_first && is_last){}
+    else{
+        if (is_first){
+            dup2(write_end, fileno(stdout));
+            close(write_end);
+        }
+        else if (is_last){
+            dup2(read_end, fileno(stdin));
+            close(read_end);
+        }else {
+            dup2(read_end, fileno(stdin));
+            close(read_end);
+            dup2(write_end, fileno(stdout));
+            close(write_end);
+        }
+    }
+
+    execve(argv[cmds[cmd_no]], &argv[cmds[cmd_no]], envp);
+}
+
 void eval(char *cmdline) 
 {
     int pipefd[2];
@@ -295,7 +329,10 @@ int parseline(const char *cmdline, char **argv)
  *    it immediately.  
  */
 int builtin_cmd(char **argv) 
-{
+{   
+    if (strcmp(argv[0], "quit") == 0){
+        exit(0);
+    }
     return 0;     /* not a builtin command */
 }
 

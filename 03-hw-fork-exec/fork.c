@@ -1,11 +1,24 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
+// #include <sys/wait.h>
 
 int main(int argc, char *argv[]) {
 	int pid;
 
 	printf("Starting program; process has pid %d\n", getpid());
+
+	FILE *f = fopen("fork-output.txt", "w");
+
+	fprintf(f, "BEFORE FORK (%d)\n", fileno(f));
+	fflush(f);
+
+	int pipefd[2];
+
+	if (pipe(pipefd) == -1){
+		perror("pipe");
+		exit(EXIT_FAILURE);
+	}
 
 	if ((pid = fork()) < 0) {
 		fprintf(stderr, "Could not fork()");
@@ -21,12 +34,8 @@ int main(int argc, char *argv[]) {
 	if (pid == 0) {
 		/* BEGIN SECTION B */
 
-		printf("Section B\n");
-		sleep(30);
-		printf("Section B done sleeping\n");
+		char *newenviron[] = { NULL };
 
-<<<<<<< Updated upstream
-=======
 		printf("Program \"%s\" has pid %d. Sleeping.\n", argv[0], getpid());
 
 		if (argc <= 1) {
@@ -35,20 +44,14 @@ int main(int argc, char *argv[]) {
 		}
 
 		printf("Running exec of \"%s\"\n", argv[1]);
-		dup2(fileno(f), 1);
 		execve(argv[1], &argv[1], newenviron);
 		printf("End of program \"%s\".\n", argv[0]);
->>>>>>> Stashed changes
 		exit(0);
 
 		/* END SECTION B */
 	} else {
 		/* BEGIN SECTION C */
-
-		printf("Section C\n");
-		sleep(60);
-		printf("Section C done sleeping\n");
-
+		sleep(5);
 		exit(0);
 
 		/* END SECTION C */
