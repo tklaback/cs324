@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 
 #define BUF_SIZE 500
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 int main(int argc, char *argv[]) {
 	struct addrinfo hints;
@@ -182,31 +183,80 @@ int main(int argc, char *argv[]) {
 	/* Send remaining command-line arguments as separate
 	   datagrams, and read responses from server */
 
-	for (j = hostindex + 2; j < argc; j++) {
-		len = strlen(argv[j]) + 1;
-		/* +1 for terminating null byte */
+	// for (j = hostindex + 2; j < argc; j++) {
+	// 	len = strlen(argv[j]) + 1;
+	// 	/* +1 for terminating null byte */
 
-		if (len + 1 > BUF_SIZE) {
-			fprintf(stderr,
-					"Ignoring long message in argument %d\n", j);
-			continue;
+	// 	if (len + 1 > BUF_SIZE) {
+	// 		fprintf(stderr,
+	// 				"Ignoring long message in argument %d\n", j);
+	// 		continue;
+	// 	}
+	// 	int num;
+	// 	if ((num = write(sfd, argv[j], len)) != len) {
+	// 		fprintf(stderr, "partial/failed write\n");
+	// 		exit(EXIT_FAILURE);
+	// 	}
+	// 	printf("%d\n", num);
+
+	// 	// nread = read(sfd, buf, BUF_SIZE);
+	// 	// if (nread == -1) {
+	// 	// 	perror("read");
+	// 	// 	exit(EXIT_FAILURE);
+	// 	// }
+
+	// 	// printf("Received %zd bytes: %s\n", nread, buf);
+
+	// }
+
+	char my_buf[4096];
+	int chunk_size = 512;
+	
+	int total_read = 0;
+	int total_written = 0;
+
+	int nwrite;
+	for (;;){
+		if (total_read == 4096){
+			printf("REACHED 4096 MAX!");
+			break;
 		}
-		int num;
-		if ((num = write(sfd, argv[j], len)) != len) {
-			fprintf(stderr, "partial/failed write\n");
-			exit(EXIT_FAILURE);
+		if ((nread = fread(my_buf + total_read, sizeof(char), chunk_size, stdin)) == 0){
+			printf("END OF FILE REACHED");
+			break;
 		}
-		printf("%d\n", num);
-
-		// nread = read(sfd, buf, BUF_SIZE);
-		// if (nread == -1) {
-		// 	perror("read");
-		// 	exit(EXIT_FAILURE);
-		// }
-
-		// printf("Received %zd bytes: %s\n", nread, buf);
-
+		total_read += nread;
+		printf("Total read: %d\n", total_read);
+		
 	}
+	for (;;){
+		nwrite = write(sfd, buf + total_written, total_read-total_written);
+		if (total_written + nwrite == total_read){
+			break;
+		}
+		total_written += nwrite;
+	}
+
+	total_read = 0;
+	for (;;){
+		if (total_read == 16384){
+			break;
+		}
+		if ((nread = read(sfd, my_buf + total_read, chunk_size)) == 0){
+			break;
+		}
+		total_read += nread;
+	}
+
+	total_written = 0;
+	for (;;){
+		nwrite = write(fileno(stdout), buf + total_written, total_read-total_written);
+		if (total_written + nwrite == total_read){
+			break;
+		}
+		total_written += nwrite;
+	}
+
 	close(sfd);
 
 	exit(EXIT_SUCCESS);
