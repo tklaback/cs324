@@ -24,3 +24,8 @@
 23. yes
 24. 0ef39a3f241cdd6552ad131e01afa9171b3dab8d
 25. 0dd26ed8deacdffb8dc1bb20eec8cf01f027892f
+26. c03ce59f9d77e2a3cf001d9dfcb66675ac1a5a81
+27. it waits
+28. returns smaller value than number requested
+29. the remaining data in the packet is discarded
+30. recv is called as long as there are more bytes to be read in the buffer
