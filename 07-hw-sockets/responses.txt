@@ -1,0 +1,26 @@
+1. socket and connect
+2. argv
+3. they are all the same
+4. the port number changes
+5. Just one server socket for all clients
+6. They are diaplayed as 0s on the client, but are printed on the server
+7. when the local socket isn't set, it defaults to 0.0.0.0:0 and the port is 0 until we send something.
+8. 3
+9. 3
+10. 3
+11. because all receive operations return only one packet
+12. 3
+13. no, only 1 byte per packet was received
+14. sfd lasts the entirety of the server while clientfd only lasts as long as the server serves the client.
+15. Now, when I call connect, a three way hand shake will be initiated.
+16. For different messages in the same socket, the port is the same
+17. The local ports are different when sent using another socket
+18. One socket for each client whereas with udp, there is one socket for all clients
+19. 3
+20. 3
+21. 1, because instead of reading individual packets, like in udp, the packets
+    are buffered and read all at once.
+22. 15
+23. yes
+24. 0ef39a3f241cdd6552ad131e01afa9171b3dab8d
+25. 0dd26ed8deacdffb8dc1bb20eec8cf01f027892f

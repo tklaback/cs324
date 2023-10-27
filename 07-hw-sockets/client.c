@@ -217,25 +217,33 @@ int main(int argc, char *argv[]) {
 
 	int nwrite;
 	for (;;){
-		if (total_read == 4096){
-			printf("REACHED 4096 MAX!");
+		if (total_read >= 4096 - chunk_size){
+			nread = fread(my_buf + total_read, 1, 4096-total_read, stdin);
+			// printf("Total read: %d 4096 - total_read = %d\n", nread, 4096-total_read);
+			total_read += nread;
 			break;
 		}
-		if ((nread = fread(my_buf + total_read, sizeof(char), chunk_size, stdin)) == 0){
-			printf("END OF FILE REACHED");
+		if ((nread = fread(my_buf + total_read, 1, chunk_size, stdin)) == 0){
+			// printf("END OF FILE REACHED");
+			break;
+		}
+		if (nread < 0){
 			break;
 		}
 		total_read += nread;
-		printf("Total read: %d\n", total_read);
+		// printf("Total read: %d\n", total_read);
 		
 	}
+	// printf("Total read: %d\n", total_read);
 	for (;;){
-		nwrite = write(sfd, buf + total_written, total_read-total_written);
+		nwrite = write(sfd, my_buf + total_written, total_read-total_written);
 		if (total_written + nwrite == total_read){
+			total_written += nwrite;
 			break;
 		}
 		total_written += nwrite;
 	}
+	// printf("total written %d\n", total_written);
 
 	total_read = 0;
 	for (;;){
@@ -250,7 +258,7 @@ int main(int argc, char *argv[]) {
 
 	total_written = 0;
 	for (;;){
-		nwrite = write(fileno(stdout), buf + total_written, total_read-total_written);
+		nwrite = write(fileno(stdout), my_buf + total_written, total_read-total_written);
 		if (total_written + nwrite == total_read){
 			break;
 		}
