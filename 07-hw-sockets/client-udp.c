@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = af;    /* Allow IPv4, IPv6, or both, depending on
 				    what was specified on the command line. */
-	hints.ai_socktype = SOCK_STREAM; /* TCP socket */
+	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
 	hints.ai_flags = 0;
 	hints.ai_protocol = 0;  /* Any protocol */
 
@@ -191,23 +191,21 @@ int main(int argc, char *argv[]) {
 					"Ignoring long message in argument %d\n", j);
 			continue;
 		}
-		int num;
-		if ((num = write(sfd, argv[j], len)) != len) {
+
+		if (write(sfd, argv[j], len) != len) {
 			fprintf(stderr, "partial/failed write\n");
 			exit(EXIT_FAILURE);
 		}
-		printf("%d\n", num);
 
-		// nread = read(sfd, buf, BUF_SIZE);
-		// if (nread == -1) {
-		// 	perror("read");
-		// 	exit(EXIT_FAILURE);
-		// }
+		nread = read(sfd, buf, BUF_SIZE);
+		if (nread == -1) {
+			perror("read");
+			exit(EXIT_FAILURE);
+		}
 
-		// printf("Received %zd bytes: %s\n", nread, buf);
+		printf("Received %zd bytes: %s\n", nread, buf);
 
 	}
-	close(sfd);
 
 	exit(EXIT_SUCCESS);
 }
